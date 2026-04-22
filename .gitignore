@@ -1,0 +1,99 @@
+# Entornos virtuales
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Archivos de entorno
+.env
+.env.local
+.env.production
+.env.development
+
+# Datos sensibles
+usuarios.json
+usuarios_backup_*.json
+accesos.log
+*.pem
+*.key
+*.crt
+
+# Archivos compilados
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Logs
+*.log
+logs/
+*.log.*
+log_*.txt
+
+# Archivos de inventario 
+Inventario/
+backup_*.xlsx
+*.bak
+*.backup
+
+# Base de datos local
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose*.yml
+
+# Archivos temporales
+*.tmp
+*.temp
+*.cache
+*.pycache
+
+# ngrok
+ngrok.exe
+ngrok.yml
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Excel temporales 
+~$*.xlsx
+~$*.xls
+
+# Backup de codigo 
+*.backup.py
+*.old.py
+
+# Excel temporales 
+~$*.xlsx
+~$*.xls
+
+# Backups automaticos 
+historico_movimientos.json.backup
+estado_anterior_cache.json.backup
+
+# Archivos de reportes generados 
+Reportes_*.xlsx
+Egresos_*.xlsx
+pedidos_finalizados_*.csv
+
+# Datos de sesion de Flask
+flask_session/
