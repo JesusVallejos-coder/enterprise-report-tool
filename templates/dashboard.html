@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | {{ session.get('usuario') }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-header fade-in">
+  <h1>
+    <i class="fas fa-chart-line"></i>
+    Panel de Control
+  </h1>
+  <p class="welcome-text">
+    Bienvenido, <strong>{{ session.get('usuario') }}</strong>. Seleccioná un módulo para comenzar.
+  </p>
+</div>
+
+<div class="stats-grid fade-in">
+  <div class="stat-card">
+    <div class="stat-icon"><i class="fas fa-boxes"></i></div>
+    <div class="stat-content">
+      <span class="stat-label">Stock Total</span>
+      <span class="stat-value" id="stockTotal">-</span>
+      <span class="stat-update">unidades en inventario</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
+    <div class="stat-content">
+      <span class="stat-label">Ingresos Hoy</span>
+      <span class="stat-value" id="ingresosHoy">-</span>
+      <span class="stat-update">movimientos del día</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+    <div class="stat-content">
+      <span class="stat-label">Última actualización</span>
+      <span class="stat-value" id="ultimaActualizacion" style="font-size:1rem;">-</span>
+      <span class="stat-update">datos en tiempo real</span>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-grid fade-in">
+  <a href="/seleccionar_anio/ingresos" class="dashboard-card">
+    <div class="card-icon bg-gradient-green"><i class="fas fa-arrow-down"></i></div>
+    <div class="card-content">
+      <h3>Ingresos Detallados</h3>
+      <p>Consulta y análisis de todos los ingresos con filtros por fecha.</p>
+      <div class="card-footer">
+        <span class="card-badge">Actualizado</span>
+        <span class="card-arrow"><i class="fas fa-arrow-right"></i></span>
+      </div>
+    </div>
+  </a>
+
+  <a href="/seleccionar_anio/egresos" class="dashboard-card">
+    <div class="card-icon bg-gradient-red"><i class="fas fa-arrow-up"></i></div>
+    <div class="card-content">
+      <h3>Egresos Detallados</h3>
+      <p>Seguimiento de todas las salidas de inventario.</p>
+      <div class="card-footer">
+        <span class="card-badge">En tiempo real</span>
+        <span class="card-arrow"><i class="fas fa-arrow-right"></i></span>
+      </div>
+    </div>
+  </a>
+
+  <a href="/consulta/stock_detallado" class="dashboard-card">
+    <div class="card-icon bg-gradient-blue"><i class="fas fa-boxes"></i></div>
+    <div class="card-content">
+      <h3>Stock Detallado</h3>
+      <p>Inventario completo con números de serie y ubicaciones.</p>
+      <div class="card-footer">
+        <span class="card-badge">Disponible</span>
+        <span class="card-arrow"><i class="fas fa-arrow-right"></i></span>
+      </div>
+    </div>
+  </a>
+
+  <a href="/consulta/stock_cantidad" class="dashboard-card">
+    <div class="card-icon bg-gradient-orange"><i class="fas fa-chart-bar"></i></div>
+    <div class="card-content">
+      <h3>Stock en Cantidad</h3>
+      <p>Resumen de cantidades disponibles por producto.</p>
+      <div class="card-footer">
+        <span class="card-badge">Consolidado</span>
+        <span class="card-arrow"><i class="fas fa-arrow-right"></i></span>
+      </div>
+    </div>
+  </a>
+
+  <a href="{{ url_for('ingresos_seriados') }}" class="dashboard-card">
+    <div class="card-icon bg-gradient-purple"><i class="fas fa-barcode"></i></div>
+    <div class="card-content">
+      <h3>Ingresos por Seriales</h3>
+      <p>Seguimiento detallado de ingresos por número de serie.</p>
+      <div class="card-footer">
+        <span class="card-badge">Trazabilidad</span>
+        <span class="card-arrow"><i class="fas fa-arrow-right"></i></span>
+      </div>
+    </div>
+  </a>
+
+  <a href="{{ url_for('egresos_seriados') }}" class="dashboard-card">
+    <div class="card-icon bg-gradient-teal"><i class="fas fa-qrcode"></i></div>
+    <div class="card-content">
+      <h3>Egresos por Seriales</h3>
+      <p>Seguimiento detallado de egresos por número de serie.</p>
+      <div class="card-footer">
+        <span class="card-badge">Trazabilidad</span>
+        <span class="card-arrow"><i class="fas fa-arrow-right"></i></span>
+      </div>
+    </div>
+  </a>
+
+  <a href="{{ url_for('consulta_rotacion') }}" class="dashboard-card">
+    <div class="card-icon bg-gradient-orange"><i class="fas fa-retweet"></i></div>
+    <div class="card-content">
+      <h3>Rotación de Inventario</h3>
+      <p>Análisis de rotación y antigüedad de productos.</p>
+      <div class="card-footer">
+        <span class="card-badge">KPI</span>
+        <span class="card-arrow"><i class="fas fa-arrow-right"></i></span>
+      </div>
+    </div>
+  </a>
+
+  <a href="{{ url_for('tracking') }}" class="dashboard-card">
+    <div class="card-icon bg-gradient-purple"><i class="fas fa-search-location"></i></div>
+    <div class="card-content">
+      <h3>Tracking por Serial</h3>
+      <p>Búsqueda y seguimiento de productos por número de serie.</p>
+      <div class="card-footer">
+        <span class="card-badge">Individual</span>
+        <span class="card-arrow"><i class="fas fa-arrow-right"></i></span>
+      </div>
+    </div>
+  </a>
+
+  <a href="{{ url_for('listar_ciclicos') }}" class="dashboard-card">
+    <div class="card-icon bg-gradient-blue"><i class="fas fa-clipboard-check"></i></div>
+    <div class="card-content">
+      <h3>Inventario Cíclico</h3>
+      <p>Gestión de archivos de inventario periódico.</p>
+      <div class="card-footer">
+        <span class="card-badge">Documentos</span>
+        <span class="card-arrow"><i class="fas fa-arrow-right"></i></span>
+      </div>
+    </div>
+  </a>
+
+  <a href="https://plataforma-distribucion.ejemplo.com/apps/landing/login/?logout=true" target="_blank" rel="noopener noreferrer" class="dashboard-card">
+    <div class="card-icon bg-gradient-teal"><i class="fas fa-truck-moving"></i></div>
+    <div class="card-content">
+      <h3>Movimiento Distribución</h3>
+      <p>Acceso a la plataforma de seguimiento de distribución.</p>
+      <div class="card-footer">
+        <span class="card-badge">Externo</span>
+        <span class="card-arrow"><i class="fas fa-external-link-alt"></i></span>
+      </div>
+    </div>
+  </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function actualizarStats() {
+  fetch('/api/stats')
+    .then(r => {
+      if (!r.ok) throw new Error('stats_error');
+      return r.json();
+    })
+    .then(data => {
+      if (data.stock_total !== undefined)
+        document.getElementById('stockTotal').textContent = data.stock_total.toLocaleString('es-PY');
+      if (data.ingresos_hoy !== undefined)
+        document.getElementById('ingresosHoy').textContent = data.ingresos_hoy.toLocaleString('es-PY');
+      if (data.ultima_actualizacion)
+        document.getElementById('ultimaActualizacion').textContent = data.ultima_actualizacion;
+    })
+    .catch(() => {});
+}
+
+actualizarStats();
+setInterval(actualizarStats, 300000);
+
+document.querySelectorAll('.dashboard-card').forEach((card, i) => {
+  card.style.animationDelay = `${i * 0.06}s`;
+  card.classList.add('fade-in');
+});
+</script>
+{% endblock %}

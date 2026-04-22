@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Enterprise Report Tool{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  {% if session.get('usuario') %}
+  <nav class="navbar-modern">
+    <div class="nav-container">
+      <a href="{{ url_for('dashboard') }}" class="nav-brand">
+        <div class="nav-brand-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <span>Enterprise Report Tool</span>
+      </a>
+
+      <div class="nav-right">
+        <div class="nav-user">
+          <i class="fas fa-user-circle"></i>
+          <span>{{ session.get('usuario') }}</span>
+        </div>
+        <button onclick="toggleTheme()" class="nav-icon-btn" id="themeToggle" title="Cambiar tema" type="button">
+          <i class="fas fa-moon"></i>
+        </button>
+        <form method="POST" action="{{ url_for('logout') }}" class="m-0">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="nav-icon-btn" title="Cerrar sesión" aria-label="Cerrar sesión">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </nav>
+  {% endif %}
+
+  <main class="main-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <div id="toast" class="toast-notification">
+    <div class="toast-icon"><i class="fas fa-info-circle"></i></div>
+    <div class="toast-message"></div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  {% block extra_js %}{% endblock %}
+
+  <script>
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.querySelector('#themeToggle i').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+
+    (function() {
+      const saved = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', saved);
+      const icon = document.querySelector('#themeToggle i');
+      if (icon) icon.className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    })();
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      const icons = { success: 'check-circle', error: 'exclamation-circle', info: 'info-circle' };
+      toast.querySelector('.toast-icon i').className = `fas fa-${icons[type] || icons.info}`;
+      toast.querySelector('.toast-message').textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    if (window.jQuery && csrfToken) {
+      $.ajaxSetup({
+        headers: { 'X-CSRFToken': csrfToken }
+      });
+    }
+  </script>
+</body>
+</html>
