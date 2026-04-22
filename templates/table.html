@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }} | Enterprise Report Tool{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="table-container fade-in">
+
+  <div class="table-header-modern">
+    <div class="table-title-modern">
+      <h2>{{ titulo }}</h2>
+      <p>
+        <i class="fas fa-user me-1"></i>{{ session.get('usuario') }}
+        &nbsp;·&nbsp;
+        <i class="fas fa-table me-1"></i>{{ datos|length }} registros
+      </p>
+    </div>
+    <div class="table-actions">
+      <form method="get" action="" class="d-inline">
+        {% for key, value in request.args.items() %}
+          {% if key != 'exportar' %}
+            <input type="hidden" name="{{ key }}" value="{{ value }}">
+          {% endif %}
+        {% endfor %}
+        <button type="submit" name="exportar" value="excel" class="btn-modern btn-primary-modern">
+          <i class="fas fa-file-excel"></i>Exportar Excel
+        </button>
+      </form>
+      <a href="{{ url_for('dashboard') }}" class="btn-modern btn-secondary-modern">
+        <i class="fas fa-arrow-left"></i>Volver
+      </a>
+    </div>
+  </div>
+
+  <table id="tablaDatos" class="table table-hover w-100">
+    <thead>
+      <tr>
+        {% for columna in columnas %}
+          <th>{{ columna }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for fila in datos %}
+        <tr>
+          {% for celda in fila %}
+            <td>{{ celda if celda is not none else '—' }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function () {
+  var table = $('#tablaDatos').DataTable({
+    pageLength: 25,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Todos']],
+    language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' },
+    responsive: true,
+    scrollX: true,
+    initComplete: function () {
+      this.api().columns().every(function () {
+        var col = this;
+        var title = $(col.header()).text().trim();
+        if (title) {
+          $('<input type="text" class="search-box" placeholder="' + title + '" />')
+            .appendTo($(col.header()))
+            .on('keyup change', function () {
+              if (col.search() !== this.value) col.search(this.value).draw();
+            });
+        }
+      });
+    }
+  });
+
+  // Sincronizar color de celdas con el tema
+  function syncColors() {
+    $('#tablaDatos tbody td').css('color', 'var(--text-2)');
+  }
+  syncColors();
+  new MutationObserver(syncColors)
+    .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+});
+</script>
+{% endblock %}
