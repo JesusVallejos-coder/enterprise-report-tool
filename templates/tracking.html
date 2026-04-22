@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Tracking por Serial | Enterprise Report Tool{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+
+{% block content %}
+<div style="max-width:1100px; margin:0 auto;">
+  <div class="dashboard-header fade-in">
+    <h1><i class="fas fa-search-location"></i> Tracking por Serial</h1>
+    <p class="welcome-text">Seguimiento completo de movimientos por número de serie</p>
+  </div>
+
+  <div class="table-container fade-in" style="padding:24px; margin-bottom:24px;">
+    <form method="POST">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <label style="font-size:0.82rem; font-weight:600; color:var(--text-2); display:block; margin-bottom:8px;">
+        <i class="fas fa-barcode me-1" style="color:var(--orange);"></i> Número de Serie
+      </label>
+      <div style="display:flex; gap:8px;">
+        <input type="text" name="nro_serie" class="form-control" placeholder="Ingrese el número de serie para rastrear..." required style="flex:1;">
+        <button type="submit" class="btn-modern btn-primary-modern" style="white-space:nowrap;">
+          <i class="fas fa-search"></i> Rastrear
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {% if movimientos is not none %}
+    {% if movimientos.empty %}
+      <div class="table-container" style="padding:48px; text-align:center;">
+        <div style="width:72px; height:72px; background:var(--surface-2); border-radius:20px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:28px; color:var(--text-4);">
+          <i class="fas fa-search"></i>
+        </div>
+        <h3 style="font-size:1.1rem; color:var(--text); margin-bottom:8px;">Sin resultados</h3>
+        <p style="color:var(--text-3); font-size:0.875rem;">El número de serie ingresado no tiene movimientos registrados.</p>
+      </div>
+    {% else %}
+      {% set first_row = movimientos.iloc[0] %}
+      <div class="table-container fade-in" style="padding:24px; margin-bottom:24px;">
+        <h3 style="font-family:var(--font-head); font-size:1rem; font-weight:700; color:var(--text); margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+          <span style="width:32px; height:32px; background:var(--orange-soft); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--orange); font-size:14px;">
+            <i class="fas fa-box"></i>
+          </span>
+          Información del Producto
+        </h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
+          {% for label, value in [('Cliente', first_row.CLIENTE_ID), ('Código', first_row.PRODUCTO_ID), ('Descripción', first_row.DESCR_PRODUCTO), ('N° Serie', first_row.NRO_SERIE)] %}
+          <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:16px;">
+            <span style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-4); display:block; margin-bottom:4px;">{{ label }}</span>
+            <span style="font-size:0.9rem; font-weight:600; color:var(--text);">{{ value }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="table-container fade-in">
+        <div class="table-header-modern">
+          <div class="table-title-modern">
+            <h2>Historial de Movimientos</h2>
+            <p>{{ movimientos|length }} movimientos encontrados · ordenados por fecha</p>
+          </div>
+        </div>
+
+        <table class="table table-hover w-100" id="trackingTable">
+          <thead>
+            <tr>
+              <th>Tipo Operación</th>
+              <th>Fecha</th>
+              <th>Ubicación</th>
+              <th>Cantidad</th>
+              <th>N° Remito</th>
+              <th>Nombre</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for _, row in movimientos.iterrows() %}
+            <tr>
+              <td>
+                <span class="badge bg-{% if row.TIPO_OPERACION == 'Ingresos' %}success{% elif row.TIPO_OPERACION == 'Egresos' %}danger{% else %}info{% endif %}">
+                  {{ row.TIPO_OPERACION }}
+                </span>
+              </td>
+              <td>{{ row.F_OPERACION }}</td>
+              <td>{{ row.UBICACION if row.UBICACION else '-' }}</td>
+              <td class="text-{% if row.TIPO_OPERACION == 'Ingresos' %}success{% elif row.TIPO_OPERACION == 'Egresos' %}danger{% else %}secondary{% endif %} fw-bold">
+                {{ row.CANTIDAD }}
+              </td>
+              <td>{{ row.NRO_REMITO if row.NRO_REMITO else '-' }}</td>
+              <td>{{ row.NOMBRE if row.NOMBRE else '-' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function() {
+  if ($('#trackingTable').length) {
+    $('#trackingTable').DataTable({
+      pageLength: 25,
+      language: { url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' },
+      order: [[1, 'asc']]
+    });
+  }
+});
+</script>
+{% endblock %}
