@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Inventario Cíclico | Enterprise Report Tool{% endblock %}
+
+{% block content %}
+<div style="max-width:900px; margin:0 auto;">
+
+  <!-- Header -->
+  <div class="dashboard-header fade-in">
+    <h1><i class="fas fa-clipboard-check"></i> Inventario Cíclico</h1>
+    <p class="welcome-text">
+      Cliente: <strong>{{ cliente }}</strong> — Seleccioná un período de inventario
+    </p>
+  </div>
+
+  <!-- Info -->
+  <div style="background:var(--orange-soft); border:1px solid var(--orange-mid); border-radius:10px; padding:14px 16px; margin-bottom:24px; display:flex; gap:10px; align-items:flex-start;" class="fade-in">
+    <i class="fas fa-info-circle" style="color:var(--orange); margin-top:2px; flex-shrink:0;"></i>
+    <p style="font-size:0.82rem; color:var(--orange-dim); margin:0; line-height:1.5;">
+      Seleccioná un período de inventario cíclico para ver los archivos disponibles.
+    </p>
+  </div>
+
+  <!-- Grid de carpetas -->
+  {% if carpetas %}
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px; margin-bottom:32px;">
+    {% for carpeta in carpetas %}
+    <a href="{{ url_for('listar_archivos', ciclico=carpeta) }}"
+       class="dashboard-card fade-in"
+       style="animation-delay:{{ loop.index0 * 0.05 }}s;">
+      <div class="card-icon bg-gradient-orange">
+        <i class="fas fa-folder-open"></i>
+      </div>
+      <div class="card-content">
+        <h3>{{ carpeta }}</h3>
+        <p>Archivos de inventario cíclico</p>
+        <div class="card-footer">
+          <span class="card-badge">Ver archivos</span>
+          <span class="card-arrow"><i class="fas fa-arrow-right"></i></span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <!-- Estado vacío -->
+  <div class="table-container" style="padding:56px; text-align:center;">
+    <div style="width:72px; height:72px; background:var(--surface-2); border-radius:20px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:28px; color:var(--text-4);">
+      <i class="fas fa-folder-open"></i>
+    </div>
+    <h3 style="font-size:1.1rem; color:var(--text); margin-bottom:8px;">Sin períodos disponibles</h3>
+    <p style="color:var(--text-3); font-size:0.875rem;">
+      No se encontraron carpetas de inventario cíclico para este cliente.
+    </p>
+  </div>
+  {% endif %}
+
+  <div style="text-align:center;">
+    <a href="{{ url_for('dashboard') }}" class="btn-modern btn-secondary-modern">
+      <i class="fas fa-arrow-left"></i> Volver al Dashboard
+    </a>
+  </div>
+
+</div>
+{% endblock %}
