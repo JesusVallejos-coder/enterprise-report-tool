@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Rotación de Inventario | Enterprise Report Tool{% endblock %}
+
+{% block content %}
+<div style="max-width:540px; margin:0 auto;">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:24px; font-size:0.82rem; color:var(--text-3);">
+    <a href="{{ url_for('dashboard') }}" style="color:var(--text-3); text-decoration:none;">
+      <i class="fas fa-home"></i> Dashboard
+    </a>
+    <i class="fas fa-chevron-right" style="font-size:10px;"></i>
+    <span style="color:var(--text-2);">Rotación de Inventario</span>
+  </div>
+
+  <div class="table-container fade-in" style="padding:32px;">
+    <div style="text-align:center; margin-bottom:28px;">
+      <div style="width:60px; height:60px; background:var(--orange-soft); border-radius:18px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:26px; color:var(--orange);">
+        <i class="fas fa-retweet"></i>
+      </div>
+      <h2 style="font-family:var(--font-head); font-size:1.3rem; font-weight:700; color:var(--text); margin-bottom:4px;">
+        Rotación de Inventario
+      </h2>
+      <p style="font-size:0.85rem; color:var(--text-3);">
+        Análisis de egresos vs ingresos · Reporte en Excel
+      </p>
+    </div>
+
+    <div style="background:var(--blue-soft); border:1px solid #BFDBFE; border-radius:10px; padding:14px 16px; margin-bottom:24px; display:flex; gap:10px; align-items:flex-start;">
+      <i class="fas fa-info-circle" style="color:var(--blue); margin-top:2px; flex-shrink:0;"></i>
+      <p style="font-size:0.82rem; color:var(--blue); margin:0; line-height:1.5;">
+        Este análisis compara los egresos con las fechas de ingreso para determinar la antigüedad del inventario. Solo aplica a productos seriados.
+      </p>
+    </div>
+
+    <p style="font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-3); margin-bottom:10px;">
+      Período rápido
+    </p>
+    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:24px;">
+      {% for label, fn in [('Últimos 30 días', 'setLast30Days'), ('Mes Actual', 'setCurrentMonth'), ('Mes Anterior', 'setLastMonth'), ('Últimos 90 días', 'setLast90Days')] %}
+      <button type="button" onclick="{{ fn }}()" style="background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px; font-size:0.78rem; font-weight:500; color:var(--text-2); cursor:pointer; transition:all 0.2s; font-family:var(--font-ui);"
+        onmouseover="this.style.borderColor='var(--orange)';this.style.background='var(--orange-soft)';this.style.color='var(--orange)';"
+        onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface-2)';this.style.color='var(--text-2)';">
+        {{ label }}
+      </button>
+      {% endfor %}
+    </div>
+
+    <form method="POST">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;">
+        <div>
+          <label class="form-label"><i class="fas fa-play me-1"></i>Fecha inicio</label>
+          <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" required>
+        </div>
+        <div>
+          <label class="form-label"><i class="fas fa-flag me-1"></i>Fecha fin</label>
+          <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-modern btn-primary-modern w-100" style="justify-content:center; padding:13px; font-size:0.9rem;">
+        <i class="fas fa-file-excel"></i> Generar Reporte Excel
+      </button>
+    </form>
+
+    <div style="text-align:center; margin-top:16px;">
+      <a href="{{ url_for('dashboard') }}" class="btn-modern btn-secondary-modern">
+        <i class="fas fa-arrow-left"></i> Volver al Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', setCurrentMonth);
+
+function setLast30Days() {
+  const end = new Date(), start = new Date();
+  start.setDate(end.getDate() - 30);
+  setDates(start, end);
+}
+function setCurrentMonth() {
+  const today = new Date();
+  setDates(new Date(today.getFullYear(), today.getMonth(), 1), today);
+}
+function setLastMonth() {
+  const today = new Date();
+  setDates(
+    new Date(today.getFullYear(), today.getMonth() - 1, 1),
+    new Date(today.getFullYear(), today.getMonth(), 0)
+  );
+}
+function setLast90Days() {
+  const end = new Date(), start = new Date();
+  start.setDate(end.getDate() - 90);
+  setDates(start, end);
+}
+function setDates(start, end) {
+  document.getElementById('fecha_inicio').value = start.toISOString().split('T')[0];
+  document.getElementById('fecha_fin').value = end.toISOString().split('T')[0];
+}
+
+document.getElementById('fecha_fin').addEventListener('change', function() {
+  if (new Date(this.value) < new Date(document.getElementById('fecha_inicio').value)) {
+    alert('La fecha fin no puede ser anterior a la fecha inicio');
+    this.value = document.getElementById('fecha_inicio').value;
+  }
+});
+</script>
+{% endblock %}
