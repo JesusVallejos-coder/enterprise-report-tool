@@ -1,16 +1,171 @@
-﻿"""
-Archivo para consultas a la base de datos.
-
-Las consultas SQL se definen aquí para mantener el código organizado.
-Los nombres de tablas y columnas han sido omitidos por razones de seguridad.
-
-En producción, este archivo contiene las consultas parametrizadas para:
-- Ingresos detallados
-- Egresos detallados  
-- Stock detallado
-- Movimientos seriados
-- Tracking por número de serie
-- Rotación de inventario
-
-Todas las consultas utilizan parámetros (?) para prevenir SQL injection.
+# queries.py
 """
+Archivo separado para todas las consultas SQL.
+
+IMPORTANTE: Los nombres de base de datos, tablas y vistas han sido
+generalizados por seguridad. En producción, reemplazar:
+  - [nombreDB] por el nombre real de la base de datos
+  - [vistaDB] por los nombres reales de las vistas/tablas
+  - Ajustar TOP según necesidad de producción
+"""
+
+# ============================================
+# CONSULTAS DE INGRESOS/EGRESOS
+# ============================================
+
+INGRESOS_DETALLADOS = """
+    SELECT TOP (1000) [CLIENTE_ID], [FECHA_INGRESO], [TIPO_DE_INGRESO], [ORDEN_COMPRA], [DOCUMENTO_ID],
+           [PROVEEDOR], [ARTICULO], [DESCRIPCION], [LOTE_PROVEEDOR], [CANTIDAD_INGRESADA], [PESO], [VOLUMEN],
+           [FAMILIA], [SUBFAMILIA]
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE CLIENTE_ID = ?
+"""
+
+EGRESOS_DETALLADOS = """
+    SELECT TOP (1000) [CLIENTE_ID], [FECHA_PEDIDO], [PEDIDO], [OLA_VIAJE],
+           [DESTINATARIO], [ARTICULO], [DESCRIPCION], [CANTIDAD_UNIDADES], [PESO], [VOLUMEN], [FECHA_EGRESO],
+           [LOTE_PROVEEDOR]
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE CLIENTE_ID = ?
+"""
+
+STOCK_DETALLADO = """
+    SELECT TOP (10000)
+           [COD. CLIENTE],
+           [COD. PRODUCTO],
+           [DESCRIPCION],
+           [CANTIDAD],
+           [EST. MERC.],
+           [NRO. SERIE],
+           [NRO. BULTO],
+           [FECHA CPTE.] AS FECHA_INGRESO,
+           DATEDIFF(DAY, [FECHA CPTE.], GETDATE()) AS ANTIGÜEDAD_DIAS,
+           CASE
+               WHEN DATEDIFF(DAY, [FECHA CPTE.], GETDATE()) BETWEEN 0 AND 30 THEN '0-30 días'
+               WHEN DATEDIFF(DAY, [FECHA CPTE.], GETDATE()) BETWEEN 31 AND 60 THEN '31-60 días'
+               WHEN DATEDIFF(DAY, [FECHA CPTE.], GETDATE()) BETWEEN 61 AND 90 THEN '61-90 días'
+               WHEN DATEDIFF(DAY, [FECHA CPTE.], GETDATE()) BETWEEN 91 AND 120 THEN '91-120 días'
+               WHEN DATEDIFF(DAY, [FECHA CPTE.], GETDATE()) BETWEEN 121 AND 180 THEN '121-180 días'
+               WHEN DATEDIFF(DAY, [FECHA CPTE.], GETDATE()) BETWEEN 181 AND 365 THEN '181-365 días'
+               ELSE 'Más de 1 año'
+           END AS PERIODICIDAD
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE [COD. CLIENTE] = ?
+"""
+
+STOCK_CANTIDAD = """
+    SELECT TOP (1000) [CLIENTE_ID], [PRODUCTO_ID], [DESCRIPCION], [CANTIDAD], [CAT_LOG_ID]
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE CLIENTE_ID = ? AND CAT_LOG_ID = 'DISPONIBLE'
+"""
+
+# ============================================
+# CONSULTAS CON FILTROS DE FECHA
+# ============================================
+
+INGRESOS_POR_MES = """
+    SELECT TOP (1000) [CLIENTE_ID], [FECHA_INGRESO], [TIPO_DE_INGRESO], [ORDEN_COMPRA], [DOCUMENTO_ID],
+           [PROVEEDOR], [ARTICULO], [DESCRIPCION], [LOTE_PROVEEDOR], [CANTIDAD_INGRESADA], [PESO], [VOLUMEN],
+           [FAMILIA], [SUBFAMILIA]
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE CLIENTE_ID = ? AND YEAR(TRY_CONVERT(date, FECHA_INGRESO, 103)) = ? AND MONTH(TRY_CONVERT(date, FECHA_INGRESO, 103)) = ?
+"""
+
+INGRESOS_POR_RANGO = """
+    SELECT TOP (1000) [CLIENTE_ID], [FECHA_INGRESO], [TIPO_DE_INGRESO], [ORDEN_COMPRA], [DOCUMENTO_ID],
+           [PROVEEDOR], [ARTICULO], [DESCRIPCION], [LOTE_PROVEEDOR], [CANTIDAD_INGRESADA], [PESO], [VOLUMEN],
+           [FAMILIA], [SUBFAMILIA]
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE CLIENTE_ID = ? AND TRY_CONVERT(date, FECHA_INGRESO, 103) BETWEEN ? AND ?
+"""
+
+EGRESOS_POR_MES = """
+    SELECT TOP (1000) [CLIENTE_ID], [FECHA_PEDIDO], [TIPO_EGRESO], [PEDIDO], [OLA_VIAJE],
+           [DESTINATARIO], [ARTICULO], [DESCRIPCION], [CANTIDAD_UNIDADES], [PESO], [VOLUMEN], [FECHA_EGRESO],
+           [LOTE_PROVEEDOR]
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE CLIENTE_ID = ? AND YEAR(TRY_CONVERT(date, FECHA_EGRESO, 103)) = ? AND MONTH(TRY_CONVERT(date, FECHA_EGRESO, 103)) = ?
+"""
+
+EGRESOS_POR_RANGO = """
+    SELECT TOP (1000) [CLIENTE_ID], [FECHA_PEDIDO], [TIPO_EGRESO], [PEDIDO], [OLA_VIAJE],
+           [DESTINATARIO], [ARTICULO], [DESCRIPCION], [CANTIDAD_UNIDADES], [PESO], [VOLUMEN], [FECHA_EGRESO],
+           [LOTE_PROVEEDOR]
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE CLIENTE_ID = ? AND TRY_CONVERT(date, FECHA_EGRESO, 103) BETWEEN ? AND ?
+"""
+
+# ============================================
+# CONSULTAS DE MOVIMIENTOS SERIADOS
+# ============================================
+
+MOVIMIENTOS_SERIADOS_POR_MES = """
+    SELECT [CLIENTE_ID], [PRODUCTO_ID],
+           [TIPO_OPERACION], [FECHA_COMPROBANTE], [CPTE_DOC_EXTERNO], [CANTIDAD],
+           [DESCR_PRODUCTO], [NRO_REMITO], [DOCUMENTO_ID], [NRO_SERIE], [EST_MERC_ID],
+           DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) AS ANTIGUEDAD_DIAS,
+           CASE
+               WHEN DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) BETWEEN 0 AND 30 THEN '0-30 días'
+               WHEN DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) BETWEEN 31 AND 60 THEN '31-60 días'
+               WHEN DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) BETWEEN 61 AND 90 THEN '61-90 días'
+               WHEN DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) BETWEEN 91 AND 120 THEN '91-120 días'
+               WHEN DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) BETWEEN 121 AND 180 THEN '121-180 días'
+               WHEN DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) BETWEEN 181 AND 365 THEN '181-365 días'
+               ELSE 'Más de 1 año'
+           END AS PERIODICIDAD
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE CLIENTE_ID = ? AND TIPO_OPERACION = ? 
+    AND YEAR(TRY_CONVERT(DATE, FECHA_COMPROBANTE)) = ? AND MONTH(TRY_CONVERT(DATE, FECHA_COMPROBANTE)) = ?
+"""
+
+MOVIMIENTOS_SERIADOS_POR_RANGO = """
+    SELECT [CLIENTE_ID], [PRODUCTO_ID],
+           [TIPO_OPERACION], [FECHA_COMPROBANTE], [CPTE_DOC_EXTERNO], [CANTIDAD],
+           [DESCR_PRODUCTO], [NRO_REMITO], [DOCUMENTO_ID], [NRO_SERIE], [EST_MERC_ID],
+           DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) AS ANTIGUEDAD_DIAS,
+           CASE
+               WHEN DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) BETWEEN 0 AND 30 THEN '0-30 días'
+               WHEN DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) BETWEEN 31 AND 60 THEN '31-60 días'
+               WHEN DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) BETWEEN 61 AND 90 THEN '61-90 días'
+               WHEN DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) BETWEEN 91 AND 120 THEN '91-120 días'
+               WHEN DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) BETWEEN 121 AND 180 THEN '121-180 días'
+               WHEN DATEDIFF(DAY, TRY_CONVERT(DATE, FECHA_COMPROBANTE), GETDATE()) BETWEEN 181 AND 365 THEN '181-365 días'
+               ELSE 'Más de 1 año'
+           END AS PERIODICIDAD
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE CLIENTE_ID = ? AND TIPO_OPERACION = ? 
+    AND TRY_CONVERT(DATE, FECHA_COMPROBANTE) BETWEEN ? AND ?
+"""
+
+# ============================================
+# CONSULTAS DE TRACKING Y ROTACIÓN
+# ============================================
+
+TRACKING_POR_SERIAL = """
+    SELECT  
+        [CLIENTE_ID], [PRODUCTO_ID], [TIPO_OPERACION],
+        [USUARIO_OPERACION], [UBICACION], [CANTIDAD],
+        [DESCR_PRODUCTO], [NRO_REMITO], [DOCUMENTO_ID], 
+        [TIPO_COMPROBANTE_ID], [NRO_SERIE], [NOMBRE], [BULTO],
+        [AUDITORIA_ID], [F_OPERACION]
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE CLIENTE_ID = ? AND NRO_SERIE = ?
+    ORDER BY F_OPERACION ASC
+"""
+
+ROTACION_EGRESOS = """
+    SELECT [CLIENTE_ID], [PRODUCTO_ID], [TIPO_OPERACION], [CANTIDAD], [DESCR_PRODUCTO], [NRO_REMITO],
+           [DOCUMENTO_ID], [NRO_SERIE], [BULTO], [F_OPERACION]
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE CLIENTE_ID = ?
+      AND TIPO_OPERACION = 'Egresos'
+      AND TRY_CONVERT(DATE, F_OPERACION) BETWEEN ? AND ?
+      AND NRO_SERIE IS NOT NULL AND NRO_SERIE != ''
+"""
+
+ROTACION_INGRESOS = """
+    SELECT [NRO_SERIE], [FECHA_COMPROBANTE]
+    FROM [nombreDB].[dbo].[vistaDB]
+    WHERE CLIENTE_ID = ?
+      AND TIPO_OPERACION = 'Ingresos'
+      AND NRO_SERIE IS NOT NULL AND NRO_SERIE != ''
