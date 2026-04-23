@@ -67,7 +67,7 @@ Sistema web de análisis y consulta de inventario en tiempo real, desarrollado c
 ```bash
 # 1. Clonar el repositorio
 git clone https://github.com/JesusVallejos-coder/enterprise-report-tool.git
-cd inventory-analytics-system
+cd enterprise-report-tool
 
 # 2. Crear entorno virtual
 python -m venv venv
@@ -96,10 +96,10 @@ La app estará disponible en `http://localhost:5050`
 
 ```bash
 # Construir imagen
-docker build -t inventory-analytics .
+docker build -t enterprise-report-tool .
 
 # Correr contenedor
-docker run -p 5050:5050 --env-file .env inventory-analytics
+docker run -p 5050:5050 --env-file .env enterprise-report-tool
 ```
 
 ---
